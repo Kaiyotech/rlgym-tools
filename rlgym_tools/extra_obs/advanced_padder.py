@@ -29,11 +29,11 @@ class AdvancedObsPadder(ObsBuilder):
             ball = state.ball
             pads = state.boost_pads
 
-        obs = [ball.position / self.POS_STD,
-               ball.linear_velocity / self.POS_STD,
-               ball.angular_velocity / self.ANG_STD,
-               previous_action,
-               pads]
+        obs = [i / self.POS_STD for i in ball.position]
+        obs.extend([i / self.POS_STD for i in ball.linear_velocity])
+        obs.extend([i / self.POS_STD for i in ball.angular_velocity])
+        obs.extend(previous_action)
+        obs.extend(pads)
 
         player_car = self._add_player_to_obs(obs, player, ball, inverted)
 
@@ -59,8 +59,7 @@ class AdvancedObsPadder(ObsBuilder):
 
             # Extra info
             team_obs.extend([
-                (other_car.position - player_car.position) / self.POS_STD,
-                (other_car.linear_velocity - player_car.linear_velocity) / self.POS_STD
+                [i / self.POS_STD for i in [i - j for i, j in zip(other_car.position, player_car.position)]],
             ])
 
         while ally_count < self.team_size-1:
@@ -86,7 +85,7 @@ class AdvancedObsPadder(ObsBuilder):
             np.zeros(3),
             np.zeros(3),
             np.zeros(3),
-            [0, 0, 0, 0]])
+            [0, 0, 0, 0, 0]])
         obs.extend([np.zeros(3), np.zeros(3)])
 
     def _add_player_to_obs(self, obs: List, player: PlayerData, ball: PhysicsObject, inverted: bool):
@@ -95,22 +94,19 @@ class AdvancedObsPadder(ObsBuilder):
         else:
             player_car = player.car_data
 
-        rel_pos = ball.position - player_car.position
-        rel_vel = ball.linear_velocity - player_car.linear_velocity
+        # rel_pos = ball.position - player_car.position
+        rel_pos = [i - j for i, j in zip(ball.position, player_car.position)]
+        # rel_vel = ball.linear_velocity - player_car.linear_velocity
+        rel_vel = [i - j for i, j in zip(ball.linear_velocity, player_car.linear_velocity)]
 
-        obs.extend([
-            rel_pos / self.POS_STD,
-            rel_vel / self.POS_STD,
-            player_car.position / self.POS_STD,
-            player_car.forward(),
-            player_car.up(),
-            player_car.linear_velocity / self.POS_STD,
-            player_car.angular_velocity / self.ANG_STD,
-            [player.boost_amount,
-             int(player.on_ground),
-             int(player.has_flip),
-             int(player.is_demoed),
-             int(player.has_jump)]])
+        obs.extend([i / self.POS_STD for i in rel_pos])
+        obs.extend([i / self.POS_STD for i in rel_vel])
+        obs.extend([i / self.POS_STD for i in player_car.position])
+        obs.extend(player_car.forward())
+        obs.extend(player_car.up())
+        obs.extend([i / self.POS_STD for i in player_car.linear_velocity])
+        obs.extend([i / self.ANG_STD for i in player_car.angular_velocity])
+        obs.extend([player.boost_amount, int(player.on_ground), int(player.has_flip), int(player.is_demoed), int(player.has_jump)])
 
         return player_car
 
