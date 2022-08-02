@@ -78,15 +78,15 @@ class AdvancedObsPadder(ObsBuilder):
 
     def _add_dummy(self, obs: List):
         obs.extend([
-            np.zeros(3),
-            np.zeros(3),
-            np.zeros(3),
-            np.zeros(3),
-            np.zeros(3),
-            np.zeros(3),
-            np.zeros(3),
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
             [0, 0, 0, 0, 0]])
-        obs.extend([np.zeros(3), np.zeros(3)])
+        obs.extend([[0, 0, 0], [0, 0, 0]])
 
     def _add_player_to_obs(self, obs: List, player: PlayerData, ball: PhysicsObject, inverted: bool):
         if inverted:
