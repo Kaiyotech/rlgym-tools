@@ -7,7 +7,7 @@ from rlgym.utils.state_setters import StateWrapper
 
 
 class ReplaySetter(StateSetter):
-    def __init__(self, ndarray_or_file: Union[str, np.ndarray]):
+    def __init__(self, ndarray_or_file: Union[str, np.ndarray], random_boost=False):
         """
         ReplayBasedSetter constructor
 
@@ -20,6 +20,7 @@ class ReplaySetter(StateSetter):
         elif isinstance(ndarray_or_file, str):
             self.states = np.load(ndarray_or_file)
         self.probabilities = self.generate_probabilities()
+        self.random_boost = random_boost
 
     def generate_probabilities(self):
         """
@@ -94,11 +95,14 @@ class ReplaySetter(StateSetter):
 
         data = np.split(data[9:], len(state_wrapper.cars))
         for i, car in enumerate(state_wrapper.cars):
+            boost = data[i][12]
+            if self.random_boost:
+                boost = random.random()
             car.set_pos(*data[i][:3])
             car.set_rot(*data[i][3:6])
             car.set_lin_vel(*data[i][6:9])
             car.set_ang_vel(*data[i][9:12])
-            car.boost = data[i][12]
+            car.boost = boost
 
     def _set_ball(self, state_wrapper: StateWrapper, data: np.ndarray):
         """
