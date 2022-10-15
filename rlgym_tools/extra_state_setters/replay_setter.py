@@ -2,6 +2,7 @@ import random
 from typing import List, Union
 
 import numpy as np
+from numpy import random as rand
 from rlgym.utils.state_setters import StateSetter
 from rlgym.utils.state_setters import StateWrapper
 
@@ -96,8 +97,10 @@ class ReplaySetter(StateSetter):
         data = np.split(data[9:], len(state_wrapper.cars))
         for i, car in enumerate(state_wrapper.cars):
             boost = data[i][12]
-            if self.random_boost:
-                boost = random.random()
+            if self.random_boost and rand.choice([True, False]):
+                boost = rand.uniform(0.35, 1.0)
+                if rand.uniform(0, 1) > 0.95:
+                    boost = boost / 10
             car.set_pos(*data[i][:3])
             car.set_rot(*data[i][3:6])
             car.set_lin_vel(*data[i][6:9])
