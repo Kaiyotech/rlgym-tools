@@ -5,10 +5,11 @@ import numpy as np
 from numpy import random as rand
 from rlgym.utils.state_setters import StateSetter
 from rlgym.utils.state_setters import StateWrapper
+import math
 
 
 class ReplaySetter(StateSetter):
-    def __init__(self, ndarray_or_file: Union[str, np.ndarray], random_boost=False):
+    def __init__(self, ndarray_or_file: Union[str, np.ndarray], random_boost=False, remove_defender_weight=0):
         """
         ReplayBasedSetter constructor
 
@@ -22,6 +23,7 @@ class ReplaySetter(StateSetter):
             self.states = np.load(ndarray_or_file)
         self.probabilities = self.generate_probabilities()
         self.random_boost = random_boost
+        self.remove_defender_weight = remove_defender_weight
 
     def generate_probabilities(self):
         """
@@ -93,15 +95,35 @@ class ReplaySetter(StateSetter):
         :param state_wrapper: StateWrapper object to be modified with desired state values.
         :param data: Numpy array from the replay to get values from.
         """
-
+        ball_pos = data[:3]
         data = np.split(data[9:], len(state_wrapper.cars))
+        attack_team = -1
+        mid = len(state_wrapper.cars) // 2
+        if self.remove_defender_weight > 0:
+            close_dist = 1000000
+            for i, car in enumerate(state_wrapper.cars):
+                car_pos = data[i][:3]
+                dist = ball_pos - car_pos
+                new_dist = math.sqrt(dist[0] ** 2 + dist[1] ** 2 + dist[2] ** 2)
+                if new_dist < close_dist:
+                    if i < mid:
+                        attack_team = 0
+                    else:
+                        attack_team = 1
+
         for i, car in enumerate(state_wrapper.cars):
             boost = data[i][12]
             if self.random_boost and rand.choice([True, False]):
                 boost = rand.uniform(0.35, 1.0)
                 if rand.uniform(0, 1) > 0.95:
                     boost = boost / 10
-            car.set_pos(*data[i][:3])
+            if self.remove_defender_weight > rand.uniform(0, 1):
+                if attack_team == 0 and i >= mid:
+                    car.set_pos(i * 100, 0, rand.uniform(17, 300))
+                elif attack_team == 1 and i < mid:
+                    car.set_pos(i * 100, 0, rand.uniform(17, 300))
+            else:
+                car.set_pos(*data[i][:3])
             car.set_rot(*data[i][3:6])
             car.set_lin_vel(*data[i][6:9])
             car.set_ang_vel(*data[i][9:12])
