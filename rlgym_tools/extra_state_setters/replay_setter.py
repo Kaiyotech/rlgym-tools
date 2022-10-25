@@ -9,7 +9,8 @@ import math
 
 
 class ReplaySetter(StateSetter):
-    def __init__(self, ndarray_or_file: Union[str, np.ndarray], random_boost=False, remove_defender_weight=0):
+    def __init__(self, ndarray_or_file: Union[str, np.ndarray], random_boost=False, remove_defender_weight=0,
+                 vel_div=False, vel_div_range=(2, 10)):
         """
         ReplayBasedSetter constructor
 
@@ -24,6 +25,10 @@ class ReplaySetter(StateSetter):
         self.probabilities = self.generate_probabilities()
         self.random_boost = random_boost
         self.remove_defender_weight = remove_defender_weight
+        self.vel_div = vel_div
+        assert vel_div_range[0] >= 1
+        assert vel_div_range[0] < vel_div_range[1]
+        self.vel_div_range = vel_div_range
 
     def generate_probabilities(self):
         """
@@ -110,7 +115,9 @@ class ReplaySetter(StateSetter):
                         attack_team = 0
                     else:
                         attack_team = 1
-
+        divisor = 1
+        if self.vel_div:
+            divisor = rand.uniform(*self.vel_div_range)
         for i, car in enumerate(state_wrapper.cars):
             boost = data[i][12]
             if self.random_boost and rand.choice([True, False]):
@@ -125,7 +132,7 @@ class ReplaySetter(StateSetter):
             else:
                 car.set_pos(*data[i][:3])
             car.set_rot(*data[i][3:6])
-            car.set_lin_vel(*data[i][6:9])
+            car.set_lin_vel(*data[i][6:9]/divisor)
             car.set_ang_vel(*data[i][9:12])
             car.boost = boost
 
