@@ -10,7 +10,7 @@ import math
 
 class ReplaySetter(StateSetter):
     def __init__(self, ndarray_or_file: Union[str, np.ndarray], random_boost=False, remove_defender_weight=0,
-                 vel_div=False, vel_div_range=(2, 10)):
+                 vel_div_range=(2, 10), vel_div_weight=0):
         """
         ReplayBasedSetter constructor
 
@@ -25,10 +25,11 @@ class ReplaySetter(StateSetter):
         self.probabilities = self.generate_probabilities()
         self.random_boost = random_boost
         self.remove_defender_weight = remove_defender_weight
-        self.vel_div = vel_div
+        self.vel_div_weight = vel_div_weight
         assert vel_div_range[0] >= 1
         assert vel_div_range[0] < vel_div_range[1]
         self.vel_div_range = vel_div_range
+        self.divisor = 1
 
     def generate_probabilities(self):
         """
@@ -90,6 +91,9 @@ class ReplaySetter(StateSetter):
 
         data = self.states[np.random.choice(len(self.states), p=self.probabilities)]
         assert len(data) == len(state_wrapper.cars) * 13 + 9, "Data given does not match current game mode"
+        self.divisor = 1
+        if self.vel_div_weight > rand.uniform(0, 1):
+            self.divisor = rand.uniform(*self.vel_div_range)
         self._set_ball(state_wrapper, data)
         self._set_cars(state_wrapper, data)
 
@@ -115,9 +119,6 @@ class ReplaySetter(StateSetter):
                         attack_team = 0
                     else:
                         attack_team = 1
-        divisor = 1
-        if self.vel_div:
-            divisor = rand.uniform(*self.vel_div_range)
         for i, car in enumerate(state_wrapper.cars):
             boost = data[i][12]
             if self.random_boost and rand.choice([True, False]):
@@ -132,7 +133,7 @@ class ReplaySetter(StateSetter):
             else:
                 car.set_pos(*data[i][:3])
             car.set_rot(*data[i][3:6])
-            car.set_lin_vel(*data[i][6:9]/divisor)
+            car.set_lin_vel(*data[i][6:9]/self.divisor)
             car.set_ang_vel(*data[i][9:12])
             car.boost = boost
 
@@ -144,5 +145,5 @@ class ReplaySetter(StateSetter):
         :param data: Numpy array from the replay to get values from.
         """
         state_wrapper.ball.set_pos(*data[:3])
-        state_wrapper.ball.set_lin_vel(*data[3:6])
+        state_wrapper.ball.set_lin_vel(*data[3:6]/self.divisor)
         state_wrapper.ball.set_ang_vel(*data[6:9])
