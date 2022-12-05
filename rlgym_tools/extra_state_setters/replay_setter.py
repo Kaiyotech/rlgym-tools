@@ -10,7 +10,7 @@ import math
 
 class ReplaySetter(StateSetter):
     def __init__(self, ndarray_or_file: Union[str, np.ndarray], random_boost=False, remove_defender_weight=0,
-                 vel_div_range=(2, 10), vel_div_weight=0):
+                 defender_front_goal_weight=0, vel_div_range=(2, 10), vel_div_weight=0):
         """
         ReplayBasedSetter constructor
 
@@ -25,6 +25,7 @@ class ReplaySetter(StateSetter):
         self.probabilities = self.generate_probabilities()
         self.random_boost = random_boost
         self.remove_defender_weight = remove_defender_weight
+        self.defender_front_goal_weight = defender_front_goal_weight
         self.vel_div_weight = vel_div_weight
         assert vel_div_range[0] >= 1
         assert vel_div_range[0] < vel_div_range[1]
@@ -108,7 +109,7 @@ class ReplaySetter(StateSetter):
         data = np.split(data[9:], len(state_wrapper.cars))
         attack_team = -1
         mid = len(state_wrapper.cars) // 2
-        if self.remove_defender_weight > 0:
+        if self.remove_defender_weight > 0 or self.defender_front_goal_weight > 0:
             close_dist = 1000000
             for i, car in enumerate(state_wrapper.cars):
                 car_pos = data[i][:3]
@@ -119,6 +120,7 @@ class ReplaySetter(StateSetter):
                         attack_team = 0
                     else:
                         attack_team = 1
+
         for i, car in enumerate(state_wrapper.cars):
             boost = data[i][12]
             if self.random_boost and rand.choice([True, False]):
@@ -130,6 +132,11 @@ class ReplaySetter(StateSetter):
                     car.set_pos(i * 100, 0, rand.uniform(17, 300))
                 elif attack_team == 1 and i < mid:
                     car.set_pos(i * 100, 0, rand.uniform(17, 300))
+            if self.defender_front_goal_weight > rand.uniform(0, 1):
+                if attack_team == 0 and i >= mid:
+                    car.set_pos(rand.uniform(-1300, 1300), rand.uniform(4000, 5100), 17)
+                elif attack_team == 1 and i < mid:
+                    car.set_pos(rand.uniform(-1300, 1300), rand.uniform(-5100, -4000), 17)
             else:
                 car.set_pos(*data[i][:3])
             car.set_rot(*data[i][3:6])
