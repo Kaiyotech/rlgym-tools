@@ -121,9 +121,9 @@ class ReplaySetter(StateSetter):
                     boost = boost / 10
             if self.remove_defender_weight > rand.uniform(0, 1):
                 if attack_team == 0 and i >= mid:
-                    car.set_pos(i * 100, 0, rand.uniform(17, 300))
+                    car.set_pos(i * 100, -5100, rand.uniform(17, 300))
                 elif attack_team == 1 and i < mid:
-                    car.set_pos(i * 100, 0, rand.uniform(17, 300))
+                    car.set_pos(i * 100, 5100, rand.uniform(17, 300))
             if self.defender_front_goal_weight > rand.uniform(0, 1):
                 if attack_team == 0 and i >= mid:
                     car.set_pos(rand.uniform(-1300, 1300), rand.uniform(4000, 5100), 17)
