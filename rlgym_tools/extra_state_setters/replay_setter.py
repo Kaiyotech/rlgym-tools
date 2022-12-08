@@ -10,7 +10,7 @@ import math
 
 class ReplaySetter(StateSetter):
     def __init__(self, ndarray_or_file: Union[str, np.ndarray], random_boost=False, remove_defender_weight=0,
-                 defender_front_goal_weight=0):
+                 defender_front_goal_weight=0,):
         """
         ReplayBasedSetter constructor
 
@@ -87,7 +87,7 @@ class ReplaySetter(StateSetter):
 
         data = self.states[np.random.choice(len(self.states), p=self.probabilities)]
         assert len(data) == len(state_wrapper.cars) * 13 + 9, "Data given does not match current game mode"
-        _set_ball(state_wrapper, data)
+        self._set_ball(state_wrapper, data)
         self._set_cars(state_wrapper, data)
 
     def _set_cars(self, state_wrapper: StateWrapper, data: np.ndarray):
@@ -129,6 +129,8 @@ class ReplaySetter(StateSetter):
                     car.set_pos(i * 100, -5100, rand.uniform(17, 300))
                 elif attack_team == 1 and i < mid:
                     car.set_pos(i * 100, 5100, rand.uniform(17, 300))
+                else:
+                    car.set_pos(*data[i][:3])
             elif defender_goal:
                 if attack_team == 0 and i >= mid:
                     car.set_pos(rand.uniform(-1300, 1300), rand.uniform(4000, 5100), 17)
@@ -136,6 +138,8 @@ class ReplaySetter(StateSetter):
                 elif attack_team == 1 and i < mid:
                     car.set_pos(rand.uniform(-1300, 1300), rand.uniform(-5100, -4000), 17)
                     defender_goal = False  # only move one defender to goal
+                else:
+                    car.set_pos(*data[i][:3])
             else:
                 car.set_pos(*data[i][:3])
 
