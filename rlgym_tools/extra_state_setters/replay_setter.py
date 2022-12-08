@@ -8,6 +8,18 @@ from rlgym.utils.state_setters import StateWrapper
 import math
 
 
+def _set_ball(state_wrapper: StateWrapper, data: np.ndarray):
+    """
+    Sets the ball according to the game state from replay
+
+    :param state_wrapper: StateWrapper object to be modified with desired state values.
+    :param data: Numpy array from the replay to get values from.
+    """
+    state_wrapper.ball.set_pos(*data[:3])
+    state_wrapper.ball.set_lin_vel(*data[3:6])
+    state_wrapper.ball.set_ang_vel(*data[6:9])
+
+
 class ReplaySetter(StateSetter):
     def __init__(self, ndarray_or_file: Union[str, np.ndarray], random_boost=False, remove_defender_weight=0,
                  defender_front_goal_weight=0):
@@ -87,7 +99,7 @@ class ReplaySetter(StateSetter):
 
         data = self.states[np.random.choice(len(self.states), p=self.probabilities)]
         assert len(data) == len(state_wrapper.cars) * 13 + 9, "Data given does not match current game mode"
-        self._set_ball(state_wrapper, data)
+        _set_ball(state_wrapper, data)
         self._set_cars(state_wrapper, data)
 
     def _set_cars(self, state_wrapper: StateWrapper, data: np.ndarray):
@@ -113,36 +125,33 @@ class ReplaySetter(StateSetter):
                     else:
                         attack_team = 1
 
+        remove_defender = self.remove_defender_weight > rand.uniform(0, 1)
+        defender_goal = self.defender_front_goal_weight > rand.uniform(0, 1)
+        rand_boost = self.random_boost and rand.choice([True, False])
         for i, car in enumerate(state_wrapper.cars):
-            boost = data[i][12]
-            if self.random_boost and rand.choice([True, False]):
+            if rand_boost:
                 boost = rand.uniform(0.35, 1.0)
                 if rand.uniform(0, 1) > 0.95:
                     boost = boost / 10
-            if self.remove_defender_weight > rand.uniform(0, 1):
+            else:
+                boost = data[i][12]
+
+            if remove_defender:
                 if attack_team == 0 and i >= mid:
                     car.set_pos(i * 100, -5100, rand.uniform(17, 300))
                 elif attack_team == 1 and i < mid:
                     car.set_pos(i * 100, 5100, rand.uniform(17, 300))
-            if self.defender_front_goal_weight > rand.uniform(0, 1):
+            elif defender_goal:
                 if attack_team == 0 and i >= mid:
                     car.set_pos(rand.uniform(-1300, 1300), rand.uniform(4000, 5100), 17)
+                    defender_goal = False  # only move one defender to goal
                 elif attack_team == 1 and i < mid:
                     car.set_pos(rand.uniform(-1300, 1300), rand.uniform(-5100, -4000), 17)
+                    defender_goal = False  # only move one defender to goal
             else:
                 car.set_pos(*data[i][:3])
+
             car.set_rot(*data[i][3:6])
             car.set_lin_vel(*data[i][6:9])
             car.set_ang_vel(*data[i][9:12])
             car.boost = boost
-
-    def _set_ball(self, state_wrapper: StateWrapper, data: np.ndarray):
-        """
-        Sets the ball according to the game state from replay
-
-        :param state_wrapper: StateWrapper object to be modified with desired state values.
-        :param data: Numpy array from the replay to get values from.
-        """
-        state_wrapper.ball.set_pos(*data[:3])
-        state_wrapper.ball.set_lin_vel(*data[3:6])
-        state_wrapper.ball.set_ang_vel(*data[6:9])
