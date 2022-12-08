@@ -8,18 +8,6 @@ from rlgym.utils.state_setters import StateWrapper
 import math
 
 
-def _set_ball(state_wrapper: StateWrapper, data: np.ndarray):
-    """
-    Sets the ball according to the game state from replay
-
-    :param state_wrapper: StateWrapper object to be modified with desired state values.
-    :param data: Numpy array from the replay to get values from.
-    """
-    state_wrapper.ball.set_pos(*data[:3])
-    state_wrapper.ball.set_lin_vel(*data[3:6])
-    state_wrapper.ball.set_ang_vel(*data[6:9])
-
-
 class ReplaySetter(StateSetter):
     def __init__(self, ndarray_or_file: Union[str, np.ndarray], random_boost=False, remove_defender_weight=0,
                  defender_front_goal_weight=0):
@@ -155,3 +143,14 @@ class ReplaySetter(StateSetter):
             car.set_lin_vel(*data[i][6:9])
             car.set_ang_vel(*data[i][9:12])
             car.boost = boost
+
+    def _set_ball(self, state_wrapper: StateWrapper, data: np.ndarray):
+        """
+        Sets the ball according to the game state from replay
+
+        :param state_wrapper: StateWrapper object to be modified with desired state values.
+        :param data: Numpy array from the replay to get values from.
+        """
+        state_wrapper.ball.set_pos(*data[:3])
+        state_wrapper.ball.set_lin_vel(*data[3:6])
+        state_wrapper.ball.set_ang_vel(*data[6:9])
