@@ -121,24 +121,32 @@ class ReplaySetter(StateSetter):
                     else:
                         attack_team = 1
 
+        remove_defender = self.remove_defender_weight > rand.uniform(0, 1)
+        defender_goal = self.defender_front_goal_weight > rand.uniform(0, 1)
+        rand_boost = self.random_boost and rand.choice([True, False])
         for i, car in enumerate(state_wrapper.cars):
-            boost = data[i][12]
-            if self.random_boost and rand.choice([True, False]):
+            if rand_boost:
                 boost = rand.uniform(0.35, 1.0)
                 if rand.uniform(0, 1) > 0.95:
                     boost = boost / 10
-            if self.remove_defender_weight > rand.uniform(0, 1):
+            else:
+                boost = data[i][12]
+
+            if remove_defender:
                 if attack_team == 0 and i >= mid:
                     car.set_pos(i * 100, -5100, rand.uniform(17, 300))
                 elif attack_team == 1 and i < mid:
                     car.set_pos(i * 100, 5100, rand.uniform(17, 300))
-            if self.defender_front_goal_weight > rand.uniform(0, 1):
+            elif defender_goal:
                 if attack_team == 0 and i >= mid:
                     car.set_pos(rand.uniform(-1300, 1300), rand.uniform(4000, 5100), 17)
+                    defender_goal = False  # only move one defender to goal
                 elif attack_team == 1 and i < mid:
                     car.set_pos(rand.uniform(-1300, 1300), rand.uniform(-5100, -4000), 17)
+                    defender_goal = False  # only move one defender to goal
             else:
                 car.set_pos(*data[i][:3])
+
             car.set_rot(*data[i][3:6])
             car.set_lin_vel(*data[i][6:9]/self.divisor)
             car.set_ang_vel(*data[i][9:12])
