@@ -5,12 +5,13 @@ import numpy as np
 from numpy import random as rand
 from rlgym.utils.state_setters import StateSetter
 from rlgym.utils.state_setters import StateWrapper
+from rlgym.utils.common_values import BOOST_LOCATIONS
 import math
 
 
 class ReplaySetter(StateSetter):
     def __init__(self, ndarray_or_file: Union[str, np.ndarray], random_boost=False, remove_defender_weight=0,
-                 defender_front_goal_weight=0, vel_div_range=(2, 10), vel_div_weight=0):
+                 defender_front_goal_weight=0, vel_div_range=(2, 10), vel_div_weight=0, end_object_tracker=None):
         """
         ReplayBasedSetter constructor
 
@@ -31,6 +32,10 @@ class ReplaySetter(StateSetter):
         assert vel_div_range[0] < vel_div_range[1]
         self.vel_div_range = vel_div_range
         self.divisor = 1
+        self.big_boosts = [BOOST_LOCATIONS[i] for i in [3, 4, 15, 18, 29, 30]]
+        self.big_boosts = np.asarray(self.big_boosts)
+        self.big_boosts[:, -1] = 18
+        self.end_object_tracker = end_object_tracker
 
     def generate_probabilities(self):
         """
@@ -163,6 +168,11 @@ class ReplaySetter(StateSetter):
         :param state_wrapper: StateWrapper object to be modified with desired state values.
         :param data: Numpy array from the replay to get values from.
         """
-        state_wrapper.ball.set_pos(*data[:3])
-        state_wrapper.ball.set_lin_vel(*data[3:6]/self.divisor)
-        state_wrapper.ball.set_ang_vel(*data[6:9])
+        if self.end_object_tracker is not None and self.end_object_tracker[0] != 0:
+            state_wrapper.ball.set_pos(*self.big_boosts[self.end_object_tracker[0] - 1])
+            state_wrapper.ball.set_lin_vel(0, 0, 0)
+            state_wrapper.ball.set_ang_vel(0, 0, 0)
+        else:
+            state_wrapper.ball.set_pos(*data[:3])
+            state_wrapper.ball.set_lin_vel(*data[3:6]/self.divisor)
+            state_wrapper.ball.set_ang_vel(*data[6:9])
