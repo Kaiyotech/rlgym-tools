@@ -11,7 +11,8 @@ import math
 
 class ReplaySetter(StateSetter):
     def __init__(self, ndarray_or_file: Union[str, np.ndarray], random_boost=False, remove_defender_weight=0,
-                 defender_front_goal_weight=0, vel_div_range=(2, 10), vel_div_weight=0, end_object_tracker=None):
+                 defender_front_goal_weight=0, vel_div_range=(2, 10), vel_div_weight=0, end_object_tracker=None,
+                 zero_ball_weight=0):
         """
         ReplayBasedSetter constructor
 
@@ -36,6 +37,7 @@ class ReplaySetter(StateSetter):
         self.big_boosts = np.asarray(self.big_boosts)
         self.big_boosts[:, -1] = 18
         self.end_object_tracker = end_object_tracker
+        self.zero_ball_weight = zero_ball_weight
 
     def generate_probabilities(self):
         """
@@ -176,3 +178,8 @@ class ReplaySetter(StateSetter):
             state_wrapper.ball.set_pos(*data[:3])
             state_wrapper.ball.set_lin_vel(*data[3:6]/self.divisor)
             state_wrapper.ball.set_ang_vel(*data[6:9])
+
+        if rand.uniform(0, 1) > self.zero_ball_weight:
+            state_wrapper.ball.set_pos(z=90)
+            state_wrapper.ball.set_lin_vel(0, 0, 0)
+            state_wrapper.ball.set_ang_vel(0, 0, 0)
