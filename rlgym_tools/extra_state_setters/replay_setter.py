@@ -179,7 +179,7 @@ class ReplaySetter(StateSetter):
             state_wrapper.ball.set_lin_vel(*data[3:6]/self.divisor)
             state_wrapper.ball.set_ang_vel(*data[6:9])
 
-        if rand.uniform(0, 1) > self.zero_ball_weight:
+        if rand.uniform(0, 1) < self.zero_ball_weight:
             state_wrapper.ball.set_pos(z=90)
             state_wrapper.ball.set_lin_vel(0, 0, 0)
             state_wrapper.ball.set_ang_vel(0, 0, 0)
