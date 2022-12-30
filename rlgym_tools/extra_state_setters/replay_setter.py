@@ -12,7 +12,7 @@ import math
 class ReplaySetter(StateSetter):
     def __init__(self, ndarray_or_file: Union[str, np.ndarray], random_boost=False, remove_defender_weight=0,
                  defender_front_goal_weight=0, vel_div_range=(2, 10), vel_div_weight=0, end_object_tracker=None,
-                 zero_ball_weight=0, zero_car_weight=0, rotate_car_weight=0):
+                 zero_ball_weight=0, zero_car_weight=0, rotate_car_weight=0, backward_car_weight=0):
         """
         ReplayBasedSetter constructor
 
@@ -20,6 +20,7 @@ class ReplaySetter(StateSetter):
         """
         super().__init__()
 
+        self.backward_car_weight = backward_car_weight
         self.rotate_car_weight = rotate_car_weight
         self.zero_car_weight = zero_car_weight
         if isinstance(ndarray_or_file, np.ndarray):
@@ -166,8 +167,10 @@ class ReplaySetter(StateSetter):
             if rand.uniform(0, 1) < self.zero_car_weight:
                 car.set_lin_vel(0, 0, 0)
                 car.set_ang_vel(0, 0, 0)
-            if rand.uniform(0, 1) < self.rotate_car_weight:
+            if rand.uniform(0, 1) < self.backward_car_weight:
                 car.set_rot(data[i][3], -data[i][4], data[i][5])
+            elif rand.uniform(0, 1) < self.rotate_car_weight:
+                car.set_rot(data[i][3], rand.uniform(-np.pi, np.pi), data[i][5])
             car.boost = boost
 
     def _set_ball(self, state_wrapper: StateWrapper, data: np.ndarray):
