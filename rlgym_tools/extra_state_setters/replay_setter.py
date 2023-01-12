@@ -12,7 +12,8 @@ import math
 class ReplaySetter(StateSetter):
     def __init__(self, ndarray_or_file: Union[str, np.ndarray], random_boost=False, remove_defender_weight=0,
                  defender_front_goal_weight=0, vel_div_range=(2, 10), vel_div_weight=0, end_object_tracker=None,
-                 zero_ball_weight=0, zero_car_weight=0, rotate_car_weight=0, backward_car_weight=0):
+                 zero_ball_weight=0, zero_car_weight=0, rotate_car_weight=0, backward_car_weight=0, special_loc_weight=0,
+                 zero_boost_weight=0):
         """
         ReplayBasedSetter constructor
 
@@ -20,6 +21,8 @@ class ReplaySetter(StateSetter):
         """
         super().__init__()
 
+        self.zero_boost_weight = zero_boost_weight
+        self.special_loc_weight = special_loc_weight
         self.backward_car_weight = backward_car_weight
         self.rotate_car_weight = rotate_car_weight
         self.zero_car_weight = zero_car_weight
@@ -134,11 +137,14 @@ class ReplaySetter(StateSetter):
         remove_defender = self.remove_defender_weight > rand.uniform(0, 1)
         defender_goal = self.defender_front_goal_weight > rand.uniform(0, 1)
         rand_boost = self.random_boost and rand.choice([True, False])
+        zero_boost = self.zero_boost_weight > rand.uniform(0, 1)
         for i, car in enumerate(state_wrapper.cars):
             if rand_boost:
                 boost = rand.uniform(0.35, 1.0)
                 if rand.uniform(0, 1) > 0.95:
                     boost = boost / 10
+            if zero_boost:
+                boost = 0
             else:
                 boost = data[i][12]
 
@@ -193,3 +199,13 @@ class ReplaySetter(StateSetter):
             state_wrapper.ball.set_pos(z=90)
             state_wrapper.ball.set_lin_vel(0, 0, 0)
             state_wrapper.ball.set_ang_vel(0, 0, 0)
+
+        elif rand.uniform(0, 1) < self.special_loc_weight:
+            if rand.uniform(0, 1) < 0.5:
+                state_wrapper.ball.set_pos(*self.big_boosts[rand.choice(len(self.big_boosts))])
+            else:
+                mult = rand.choice([-1, 1])
+                mult2 = rand.choice([-1, 1])
+                loc = [1000 * mult, mult2 * 4800, 90]
+                state_wrapper.ball.set_pos(*loc)
+            state_wrapper.ball.set_pos(z=90)
