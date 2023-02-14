@@ -5,9 +5,27 @@
 # 3) we can import it into your module module
 # https://stackoverflow.com/questions/458550/standard-way-to-embed-version-into-python-package
 
-__version__ = '1.7.0'
+__version__ = '1.8.2'
 
 release_notes = {
+    '1.8.2': """
+       - Fix no touch timer in GameCondition (Rolv)
+       - Update RLLib example (Aech)
+    """,
+    '1.8.1': """
+        - Refactor GameCondition (Rolv, Impossibum)
+        - Fix a small mistake in LookupAction (Rolv)
+    """,
+    '1.8.0': """
+        - Add lookup parser as used by Nexto/Tecko (Rolv)
+        - Add customizable odds to WallPracticeState (Soren)
+        - Add code for reducing SB3 model size for RLBot botpack, with example (DI3D)
+        - Update AdvancedPadder for RLGym 1.2 (Kaiyotech)
+        - Update example code for RLGym 1.2 (mstuettgen)
+        - Fix AdvancedStacker (Some Rando)
+        - Fix broken imports in SequentialRewards (Some Rando)
+        - Fix bad indent in JumpTouchReward (Some Rando)
+        """,
     '1.7.0':
         """
         - Add AdvancedObsPadder (Impossibum)
