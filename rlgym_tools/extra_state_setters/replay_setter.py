@@ -108,6 +108,7 @@ class ReplaySetter(StateSetter):
                 dist = ball_pos - car_pos
                 new_dist = math.sqrt(dist[0] ** 2 + dist[1] ** 2 + dist[2] ** 2)
                 if new_dist < close_dist:
+                    close_dist = new_dist
                     if i < mid:
                         attack_team = 0
                     else:
