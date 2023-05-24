@@ -13,7 +13,7 @@ class ReplaySetter(StateSetter):
     def __init__(self, ndarray_or_file: Union[str, np.ndarray], random_boost=False, remove_defender_weight=0,
                  defender_front_goal_weight=0, vel_div_range=(2, 10), vel_div_weight=0, end_object_tracker=None,
                  zero_ball_weight=0, zero_car_weight=0, rotate_car_weight=0, backward_car_weight=0, special_loc_weight=0,
-                 zero_boost_weight=0):
+                 zero_boost_weight=0, dtap_dict=None, initial_state_dict=(False, False, False)):
         """
         ReplayBasedSetter constructor
 
@@ -21,6 +21,8 @@ class ReplaySetter(StateSetter):
         """
         super().__init__()
 
+        self.initial_state_dict = initial_state_dict
+        self.dtap_dict = dtap_dict
         self.zero_boost_weight = zero_boost_weight
         self.special_loc_weight = special_loc_weight
         self.backward_car_weight = backward_car_weight
@@ -110,6 +112,11 @@ class ReplaySetter(StateSetter):
             self.divisor = rand.uniform(*self.vel_div_range)
         self._set_ball(state_wrapper, data)
         self._set_cars(state_wrapper, data)
+
+        if self.dtap_dict is not None:
+            self.dtap_dict["hit_towards_bb"] = self.initial_state_dict[0]
+            self.dtap_dict["ball_hit_bb"] = self.initial_state_dict[1]
+            self.dtap_dict["hit_towards_goal"] = self.initial_state_dict[2]
 
     def _set_cars(self, state_wrapper: StateWrapper, data: np.ndarray):
         """
